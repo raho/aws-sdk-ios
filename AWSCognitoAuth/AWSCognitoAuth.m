@@ -264,14 +264,16 @@ static NSString * AWSCognitoAuthAsfDeviceId = @"asf.device.id";
     if (self.useSFAuthenticationSession) {
         if (@available(iOS 11.0, *)) {
             self.sfAuthenticationSessionAvailable = YES;
-            self.sfAuthSession = [[SFAuthenticationSession alloc] initWithURL:[NSURL URLWithString:url] callbackURLScheme:[self urlEncode:self.authConfiguration.signInRedirectUri] completionHandler:^(NSURL * _Nullable url, NSError * _Nullable error) {
-                if (url) {
-                    [self processURL:url forRedirection:NO];
-                } else {
-                    [self dismissSafariViewControllerAndCompleteGetSession:nil error:error];
-                }
-            }];
-            [self.sfAuthSession start];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self.sfAuthSession = [[SFAuthenticationSession alloc] initWithURL:[NSURL URLWithString:url] callbackURLScheme:[self urlEncode:self.authConfiguration.signInRedirectUri] completionHandler:^(NSURL * _Nullable url, NSError * _Nullable error) {
+                    if (url) {
+                        [self processURL:url forRedirection:NO];
+                    } else {
+                        [self dismissSafariViewControllerAndCompleteGetSession:nil error:error];
+                    }
+                }];
+                [self.sfAuthSession start];
+            });
         } else {
             // Fallback on earlier versions
             [self showSFSafariViewControllerForURL:url withPresentingViewController:vc];
